@@ -51,10 +51,7 @@ group by CustomerName
 having sum(claimscount)>1 and sum(FeedbackScore)>floor(avg(FeedbackScore)) ;
 
 
-12. select avg(feedbackscore) ,policytype,
-case 
-when investigation = 'Yes' then avg(feedbackscore)
-when investigation ='No' then avg(feedbackscore)
-end as avgs
-  from insuranceactivities
-group by policytype;
+12. select case 
+when investigation ='Yes'then (select avg(feedbackscore)  from insuranceactivities where investigation ='Yes') 
+when investigation ='No' then (select avg(feedbackscore)  from insuranceactivities where investigation ='No')
+end,policytype from insuranceactivities;

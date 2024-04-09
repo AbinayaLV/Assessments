@@ -1,0 +1,60 @@
+1. select customerid from customerinteractions
+where Month ='March'
+group by CustomerID
+having sum(DataUsed)>floor(avg(DataUsed));
+
+2. SELECT (select sum(callduration) from customerinteractions
+where Month='March' ) as March_CALL,(select sum(callduration) from customerinteractions
+where Month='February') as Feb_CALL, customerid from customerinteractions
+group by customerid
+having march_call>feb_call;
+
+3.select customerid ,sum(MessageCount) ,month from customerinteractions
+group by CustomerID,Month;
+
+
+4. select sum(totalsalesamount) from quarterlysales
+where ProductTypeID =1;
+
+5.select ProductTypeID,sum(totalsalesamount) from quarterlysales
+where Quarter='q1' and year = 2024
+group by ProductTypeID;
+
+6.select round(avg(totalsalesamount/UnitsSold)) from quarterlysales
+where Quarter='q2' and year = 2024 and ProductTypeID=1;
+
+7. select region, sum(ConsumptionKWh) as sum from sectorenergyconsumption
+where Month='March' and year = 2024 and EnergySource in ('solar','wind')
+group by region
+having sum>avg(ConsumptionKWh)
+order by sum desc;
+
+8. select month ,sector, sum(ConsumptionKWh) from sectorenergyconsumption
+group by Sector,month;
+
+9.select sum(consumptionkwh) as renSource from sectorenergyconsumption
+where EnergySource in('solar','wind')
+union
+select sum(consumptionkwh) as nonrenSource from sectorenergyconsumption
+where EnergySource = 'Fossil Fuels';
+
+
+10.select customerName from insuranceactivities
+where investigation ='No'
+group by CustomerName
+having sum(FeedbackScore)>floor(avg(FeedbackScore)) ;
+
+
+11. select customername,sum(annualpremium) from insuranceactivities
+where Investigation='No'
+group by CustomerName
+having sum(claimscount)>1 and sum(FeedbackScore)>floor(avg(FeedbackScore)) ;
+
+
+12. select avg(feedbackscore) ,policytype,
+case 
+when investigation = 'Yes' then avg(feedbackscore)
+when investigation ='No' then avg(feedbackscore)
+end as avgs
+  from insuranceactivities
+group by policytype;

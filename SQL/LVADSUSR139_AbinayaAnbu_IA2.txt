@@ -1,0 +1,87 @@
+1.select machine_id from l1_maintenance_records
+where month(maintenance_date) = 3 and year(maintenance_date) =2024
+and cost > (select avg(cost) from l1_maintenance_records
+where month(maintenance_date) = 3 and year(maintenance_date) =2024);
+
+
+2.select maintenance_type , count(maintenance_id) from l1_maintenance_records
+where month(maintenance_date) = 3 and year(maintenance_date) =2024
+group by maintenance_type
+order by count(maintenance_id);
+
+3.select technician_name ,count(maintenance_id) as c ,avg(cost) as avg  from l1_maintenance_records
+where month(maintenance_date) = 3 and year(maintenance_date) =2024
+group by technician_name
+order by c ,avg desc
+limit 1;
+
+
+
+4.select product_id,round(avg(incident_count_pre_update-incident_count_post_update)) as inc from l2_updates
+group by product_id
+order by inc desc;
+
+
+5.select update_id,user_feedback_score from l2_updates
+order by user_feedback_score desc
+limit 1;
+
+6.select product_id , round(avg(incident_count_pre_update-incident_count_post_update)) as u from l2_updates
+group by product_id
+order by u asc
+limit 1; -- the count is decreaed less in p100 product compared to all
+
+
+7.select p.patient_id,f.facility_name ,v.reason_for_visit,t.outcome from l3_visits v
+join l3_patients p using(patient_id) 
+join l3_facilities f  using(facility_id)
+join l3_treatments t using(visit_id)
+where month(visit_date) = 3 and year(visit_date) =2024
+group by p.patient_id,f.facility_name ,v.reason_for_visit,t.outcome
+having count(visit_id)>1;
+
+8.select f.facility_id, count(v.visit_id) as c from l3_facilities f
+join l3_visits v using(facility_id)
+where month(visit_date) = 3 and year(visit_date) =2024 and reason_for_visit='Emergency'
+group by facility_id
+order by c desc
+limit 1 ;
+
+
+9.select p.insurance_provider ,count(t.treatment_id) from l3_patients p
+join l3_visits v using (patient_id)
+join l3_treatments t using (visit_id)
+where quarter(visit_date) = 1 and year(visit_date) = 2024
+and t.outcome ='Complicated'
+group by insurance_provider;
+
+10. select product_name ,category , (
+select sum(quantity) from l4_sales as s 
+where s.product_id = p.product_id 
+and month(sale_date) =3 and year(sale_date)=2024
+)  as Total_Quantity
+
+from l4_products p
+group by category,product_name,total_quantity
+order by total_quantity desc
+limit 1;
+
+11. create view sales_store as 
+ select * from l4_sales
+ join l4_stores using(store_id);
+ 
+ select * from sales_store;
+ 
+ select ss.region,sum((p.price * ss.quantity) )as t_sales from sales_store ss
+ join l4_products p using(product_id)
+ where quarter(ss.sale_date) =1 and year(ss.sale_date) =2024
+ group by region
+ order by t_sales desc
+ limit 1;
+
+12.select st.region, p.product_name ,p.category, sum(s.quantity) from l4_products p
+outer join l4_sales s using(product_id)
+join l4_stores st using(store_id)
+where month(sale_date)=3 and year(sale_date) =2024
+group by p.product_name ,p.category,st.region
+order by sum(s.quantity) desc ;

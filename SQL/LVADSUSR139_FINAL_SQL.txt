@@ -1,0 +1,120 @@
+1.select p.product_category,avg(s.sales_amount) from products p
+join sales_records s
+where datediff(current_date(),sales_date)<30
+group by p.product_category;
+
+2.select product_id, rank() over(partition by product_id order by sum(sales_amount) desc) as ranks from sales_records
+where year(sales_date)=year(current_date)
+group by product_id
+order by  ranks  desc
+limit 3;
+
+3.
+with cte as (
+select customer_id, cume_dist() over(partition by customer_id order by (select sum(sales_amount) from sales_records)) as dist 
+from sales_records)
+select distinct*, rank() over(partition by customer_id order by dist) from cte ;
+
+4.select customer_id,
+case 
+when count(*) >4 then 'consistant_buyer'
+else 'occational_buyer' 
+end as category from sales_records
+where sales_date between sales_date and date_sub(sales_date, interval 6 month)
+group by customer_id;
+
+5.select departure_airport,arrival_airport,avg(base_price) from flights
+group by departure_airport,arrival_airport;
+
+6.
+select t.flight_id,f.departure_date,sum(t.ticket_price) as total_sales from tickets t 
+left join flights f using(flight_id)
+where ticket_date between current_date() and current_date()-30
+group by t.flight_id,f.departure_date
+order by total_sales desc;
+
+7.select p.passenger_name , sum(ticket_price) as total_spend,p.frequent_flyer_status from tickets t 
+right join passengers p using(passenger_id)
+group by p.passenger_name,p.frequent_flyer_status
+order by total_spend desc
+limit 5;
+
+8.select month(ticket_date)as month,count(ticket_id)  as count from tickets
+group by month
+order by count desc 
+limit 1;
+
+9.select g.game_genre, avg(extract(Minute from datediff(registration_date,g.release_date))) as avg_min from PlayerScores s
+left join players p using (player_id)
+left join games g using (game_id)
+group by g.game_genre;
+
+10. select game_id, count(player_id) as count_p from playerscores
+group by game_id
+order by count_p desc
+limit 3;
+
+11.
+select game_id, count(player_id) as count, avg(score) as avg_score,max(score) as high_score from playerscores
+group by game_id;
+
+
+12.
+with cte as (
+select p.player_id,p.registration_date,last_value(s.play_date) over (partition by player_id order by play_date) as last_active from players p
+join playerscores s using(player_id))
+select * ,datediff(current_date(),last_active) as activity from cte
+having activity  > 30;
+
+13.select doctor_id, sum(cost) as cost from treatments
+group by doctor_id
+order by cost desc
+limit 5;
+
+14.select treatment_name,sum(cost) , cume_dist() over(partition by treatment_name order by sum(cost)) as per from treatments
+group by treatment_name ;
+
+15.create view leads as (
+select patient_id,admission_date,discharge_date, lead(admission_date) 
+over (partition by patient_id) as next from patients); 
+
+select p.patient_id,p.patient_name,p.admission_date,p.discharge_date ,datediff(l.next,p.discharge_date) as d from patients p 
+join leads l using (patient_id)
+group by p.patient_id,p.patient_name,p.admission_date,p.discharge_date
+having d>30 ;
+
+16.select patient_name,gender,diagnosis , round(avg(datediff(discharge_date,admission_date))) from patients
+group by patient_name,gender,diagnosis;
+
+17.select c.department,e.semester,avg(e.grade)as avg from courses c 
+right join enrollments e using (course_id)
+group by c.department,e.semester
+order by c.department,e.semester ;
+
+
+18.
+select major,count(student_id) as count,enrollment_year from students
+group by major,enrollment_year
+order by count desc 
+limit 5;
+
+
+19.create view stu as
+select s.student_id,s.student_name,e.semester,sum(e.grade) as total_credits,cume_dist() over(partition by semester ,student_id )  as p_credits from students s
+left join enrollments e using (student_id)
+group by s.student_id,s.student_name,e.semester;
+
+select * from stu
+where p_credits>0.5;
+
+
+20.
+create view v as 
+select c.course_name ,count(e.enrollment_id) as enrollment_count ,s.enrollment_year from enrollments e
+left join courses c using(course_id)
+left join students s using(student_id)
+where s.enrollment_year between 2019 and 2024
+group by  c.course_name,s.enrollment_year;
+
+
+select *, rank ()over(partition by enrollment_year order by enrollment_count) from v;
